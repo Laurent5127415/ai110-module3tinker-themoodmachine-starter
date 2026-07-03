@@ -27,6 +27,8 @@ POSITIVE_WORDS = [
     "lovely",
     "hopeful",
     "proud",
+    "okay",
+    "well",
     "🤑",
     "☕",
 ]
@@ -34,6 +36,7 @@ POSITIVE_WORDS = [
 NEGATIVE_WORDS = [
     "sad",
     "bad",
+    "badd",
     "terrible",
     "awful",
     "angry",

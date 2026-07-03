@@ -124,20 +124,38 @@ class MoodAnalyzer:
           - score < 0  → "negative"
           - score == 0 → "neutral"
         
-        Also detects "mixed" emotions when text contains both positive and negative words.
+        Also detects "mixed" emotions when text contains both positive and negative
+        sentiment contributions after negation handling.
         """
         score = self.score_text(text)
         tokens = self.preprocess(text)
         
-        # Check if text contains both positive and negative words
-        has_positive = any(token in self.positive_words for token in tokens)
-        has_negative = any(token in self.negative_words for token in tokens)
-        
-        # If score is close to zero and has mixed signals, label as "mixed"
-        if score == 0 and has_positive and has_negative:
+        positive_hit = False
+        negative_hit = False
+        negation_words = {'not', 'never', 'no', 'dont', 'doesn', 'can\'t', 'cant', 'won\'t', 'wont'}
+        i = 0
+        while i < len(tokens):
+            token = tokens[i]
+            if token in negation_words:
+                for j in range(i + 1, min(i + 4, len(tokens))):
+                    next_token = tokens[j]
+                    if next_token in self.positive_words:
+                        negative_hit = True
+                        i = j
+                        break
+                    elif next_token in self.negative_words:
+                        positive_hit = True
+                        i = j
+                        break
+            elif token in self.positive_words:
+                positive_hit = True
+            elif token in self.negative_words:
+                negative_hit = True
+            i += 1
+
+        if positive_hit and negative_hit:
             return "mixed"
-        
-        # Otherwise use simple threshold
+
         if score > 0:
             return "positive"
         elif score < 0:

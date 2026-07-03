@@ -10,6 +10,7 @@ This class starts with very simple logic:
 """
 
 from typing import List, Dict, Tuple, Optional
+import string
 
 from dataset import POSITIVE_WORDS, NEGATIVE_WORDS
 
@@ -40,20 +41,23 @@ class MoodAnalyzer:
         """
         Convert raw text into a list of tokens the model can work with.
 
-        TODO: Improve this method.
-
-        Right now, it does the minimum:
+        Improvements implemented:
           - Strips leading and trailing whitespace
           - Converts everything to lowercase
-          - Splits on spaces
-
-        Ideas to improve:
-          - Remove punctuation
-          - Handle simple emojis separately (":)", ":-(", "🥲", "😂")
-          - Normalize repeated characters ("soooo" -> "soo")
+          - Removes punctuation (but keeps emojis for sentiment signals)
+          - Splits on whitespace
         """
+        # Strip whitespace and convert to lowercase
         cleaned = text.strip().lower()
-        tokens = cleaned.split()
+        
+        # Remove punctuation except for common emoji indicators
+        # This preserves emojis while removing sentence punctuation
+        punctuation = string.punctuation.replace(':', '')
+        for char in punctuation:
+            cleaned = cleaned.replace(char, ' ')
+        
+        # Split on whitespace and filter out empty tokens
+        tokens = [t for t in cleaned.split() if t]
 
         return tokens
 
@@ -65,25 +69,47 @@ class MoodAnalyzer:
         """
         Compute a numeric "mood score" for the given text.
 
-        Positive words increase the score.
-        Negative words decrease the score.
-
-        TODO: You must choose AT LEAST ONE modeling improvement to implement.
-        For example:
-          - Handle simple negation such as "not happy" or "not bad"
-          - Count how many times each word appears instead of just presence
-          - Give some words higher weights than others (for example "hate" < "annoyed")
-          - Treat emojis or slang (":)", "lol", "💀") as strong signals
+        Enhancement: Negation handling
+          - When "not" or "never" precedes a word, flip the sentiment
+          - Looks ahead up to 3 tokens to find the sentiment word
+          - Example: "not happy" → -1, "not a bad day" → +1
         """
-        # TODO: Implement this method.
-        #   1. Call self.preprocess(text) to get tokens.
-        #   2. Loop over the tokens.
-        #   3. Increase the score for positive words, decrease for negative words.
-        #   4. Return the total score.
-        #
-        # Hint: if you implement negation, you may want to look at pairs of tokens,
-        # like ("not", "happy") or ("never", "fun").
-        pass
+        tokens = self.preprocess(text)
+        score = 0
+        
+        # Negation words that flip the sentiment of the next word
+        negation_words = {'not', 'never', 'no', 'dont', 'doesn', 'can\'t', 'cant', 'won\'t', 'wont'}
+        
+        i = 0
+        while i < len(tokens):
+            token = tokens[i]
+            
+            # Check if this is a negation word
+            if token in negation_words:
+                # Look ahead for the next sentiment word (within next 3 tokens)
+                for j in range(i + 1, min(i + 4, len(tokens))):
+                    next_token = tokens[j]
+                    if next_token in self.positive_words:
+                        score -= 1  # Flip positive to negative
+                        i = j  # Skip to the sentiment word so we don't process it again
+                        break
+                    elif next_token in self.negative_words:
+                        score += 1  # Flip negative to positive
+                        i = j  # Skip to the sentiment word so we don't process it again
+                        break
+                else:
+                    # No sentiment word found, just move past the negation
+                    pass
+            
+            # Regular sentiment scoring
+            elif token in self.positive_words:
+                score += 1
+            elif token in self.negative_words:
+                score -= 1
+            
+            i += 1
+        
+        return score
 
     # ---------------------------------------------------------------------
     # Label prediction
@@ -93,24 +119,31 @@ class MoodAnalyzer:
         """
         Turn the numeric score for a piece of text into a mood label.
 
-        The default mapping is:
-          - score > 0  -> "positive"
-          - score < 0  -> "negative"
-          - score == 0 -> "neutral"
-
-        TODO: You can adjust this mapping if it makes sense for your model.
-        For example:
-          - Use different thresholds (for example score >= 2 to be "positive")
-          - Add a "mixed" label for scores close to zero
-        Just remember that whatever labels you return should match the labels
-        you use in TRUE_LABELS in dataset.py if you care about accuracy.
+        Mapping:
+          - score > 0  → "positive"
+          - score < 0  → "negative"
+          - score == 0 → "neutral"
+        
+        Also detects "mixed" emotions when text contains both positive and negative words.
         """
-        # TODO: Implement this method.
-        #   1. Call self.score_text(text) to get the numeric score.
-        #   2. Return "positive" if the score is above 0.
-        #   3. Return "negative" if the score is below 0.
-        #   4. Return "neutral" otherwise.
-        pass
+        score = self.score_text(text)
+        tokens = self.preprocess(text)
+        
+        # Check if text contains both positive and negative words
+        has_positive = any(token in self.positive_words for token in tokens)
+        has_negative = any(token in self.negative_words for token in tokens)
+        
+        # If score is close to zero and has mixed signals, label as "mixed"
+        if score == 0 and has_positive and has_negative:
+            return "mixed"
+        
+        # Otherwise use simple threshold
+        if score > 0:
+            return "positive"
+        elif score < 0:
+            return "negative"
+        else:
+            return "neutral"
 
     # ---------------------------------------------------------------------
     # Explanations (optional but recommended)

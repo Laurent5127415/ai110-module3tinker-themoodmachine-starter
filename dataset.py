@@ -23,6 +23,12 @@ POSITIVE_WORDS = [
     "chill",
     "relaxed",
     "amazing",
+    "best",
+    "lovely",
+    "hopeful",
+    "proud",
+    "🤑",
+    "☕",
 ]
 
 NEGATIVE_WORDS = [
@@ -50,6 +56,16 @@ SAMPLE_POSTS = [
     "This is fine",
     "So excited for the weekend",
     "I am not happy about this",
+    "Lowkey stressed but kind of proud of myself",
+    "This is so boring 😒",
+    "I can't believe how much I hate this",
+    "Feeling like a million bucks today! 🤑",
+    "Just had the best coffee ever! ☕",
+    "Not bad at all",
+    "I absolutely love getting stuck in traffic",
+    "No cap, this is amazing",
+    "I feel okay, not great but not awful",
+    "Lowkey stressed but kind of excited for the trip",
 ]
 
 # Human labels for each post above.
@@ -65,6 +81,16 @@ TRUE_LABELS = [
     "neutral",   # "This is fine"
     "positive",  # "So excited for the weekend"
     "negative",  # "I am not happy about this"
+    "mixed",     # "Lowkey stressed but kind of proud of myself"
+    "negative",  # "This is so boring 😒"
+    "negative",  # "I can't believe how much I hate this"
+    "positive",  # "Feeling like a million bucks today! 🤑"
+    "positive",    # "Just had the best coffee ever! ☕"
+    "positive",  # "Not bad at all"
+    "negative",  # "I absolutely love getting stuck in traffic"
+    "positive",  # "No cap, this is amazing"
+    "mixed",     # "I feel okay, not great but not awful"
+    "mixed",     # "Lowkey stressed but kind of excited for the trip"
 ]
 
 # TODO: Add 5-10 more posts and labels.
